@@ -88,7 +88,7 @@ export default function FutDraft({ catalog }: Props) {
 
   const card = (s: Spot, c: Card) => (
     <span className={selected === s ? 'fd-selected' : undefined}>
-      <InaCard card={c} size="xs" onClick={() => tap(s)} />
+      <InaCard card={c} size="xs" onClick={() => tap(s)} onLongPress={() => setInspecting(c)} />
     </span>
   )
 
@@ -150,6 +150,7 @@ export default function FutDraft({ catalog }: Props) {
               selected={selected && benchIndex(selected) < 0 ? (selected as SlotId) : null}
               onTapPlaced={(id) => tap(id)}
               onTapEmpty={openSpot}
+              onLongPress={(c) => setInspecting(c)}
             />
 
             {full && (

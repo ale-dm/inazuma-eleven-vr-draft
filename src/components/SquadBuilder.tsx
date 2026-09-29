@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Card, Formation } from '../types'
 import InaCard from './InaCard'
+import CardDetail from './CardDetail'
 import formationsData from '../data/formations.json'
 import { exportAndDownload } from '../lib/exportVictoryMods'
 
@@ -22,6 +23,7 @@ export default function SquadBuilder({ catalog }: Props) {
   const [search, setSearch] = useState('')
   const [positionFilter, setPositionFilter] = useState<string>('ALL')
   const [error, setError] = useState<string | null>(null)
+  const [inspecting, setInspecting] = useState<Card | null>(null)
 
   const usedIds = useMemo(() => new Set(squad.filter((c): c is Card => !!c).map((c) => c.id)), [squad])
 
@@ -81,7 +83,13 @@ export default function SquadBuilder({ catalog }: Props) {
           </div>
           <div className="fd-options max-h-[70vh] overflow-y-auto">
             {filtered.map((card) => (
-              <InaCard key={card.id} card={card} size="sm" onClick={filledCount < TOTAL_SLOTS ? () => addToFirstEmpty(card) : undefined} />
+              <InaCard
+                key={card.id}
+                card={card}
+                size="sm"
+                onClick={filledCount < TOTAL_SLOTS ? () => addToFirstEmpty(card) : undefined}
+                onLongPress={() => setInspecting(card)}
+              />
             ))}
             {filtered.length === 0 && <p className="text-sm text-iz-muted">Sin resultados.</p>}
           </div>
@@ -126,6 +134,7 @@ export default function SquadBuilder({ catalog }: Props) {
           {!canExport && <p className="text-[0.7rem] text-iz-muted">Completa los 11 titulares y marca un capitan.</p>}
         </div>
       </div>
+      <CardDetail card={inspecting} onClose={() => setInspecting(null)} />
     </div>
   )
 }

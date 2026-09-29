@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Card } from '../types'
 import { raritySlug } from '../lib/rarity'
-import { PositionIcon, ElementIcon } from './GameIcon'
+import { PositionIcon, ElementIcon, SeriesIcon } from './GameIcon'
 
 interface Props {
   card: Card
@@ -25,6 +25,7 @@ export default function InaCard({ card, size = 'md', onClick, onLongPress }: Pro
   const [crestFailed, setCrestFailed] = useState(false)
   const Tag = onClick ? 'button' : 'div'
   const small = size === 'xs'
+  const displayName = card.nickname ?? card.name
 
   const pressTimer = useRef<number | undefined>(undefined)
   const longPressed = useRef(false)
@@ -69,9 +70,9 @@ export default function InaCard({ card, size = 'md', onClick, onLongPress }: Pro
           <img className="ic__crest" src={card.teamLogo} alt="" onError={() => setCrestFailed(true)} />
         )}
       </span>
-      {!small && <span className="ic__chip">{card.game}</span>}
+      {!small && <span className="ic__chip"><SeriesIcon game={card.game} className="ic__chip-icon" /></span>}
       <span className="ic__foot">
-        <span className="ic__name">{small ? card.name.split(' ').slice(-1)[0] : card.name}</span>
+        <span className="ic__name">{small ? displayName.split(' ').slice(-1)[0] : displayName}</span>
         {!small && <span className="ic__team">{card.version || card.team || card.game}</span>}
       </span>
     </Tag>

@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Card, Category, Element, GameId, Position } from '../types'
+import nicknames from '../data/nicknames.json'
 
 const PAGE = 1000
 
@@ -44,6 +45,7 @@ function toCard(r: Row): Card {
     id: r.id,
     characterId: r.character_id,
     name: r.name,
+    nickname: (nicknames as Record<string, string>)[r.character_id] ?? null,
     game,
     version: r.version,
     team: r.team,
