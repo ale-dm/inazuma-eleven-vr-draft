@@ -8,6 +8,9 @@ export interface CardTechnique {
   id: string
   name: string
   victorymodsId: number | null
+  element: Element | null
+  /** Coste en TP: el real de Victory Road si lo tenemos, si no el historico de la wiki. */
+  tp: number | null
 }
 
 export interface Card {
@@ -21,6 +24,8 @@ export interface Card {
   element: Element | null
   category: Category
   image: string | null
+  /** Escudo del equipo (de Supabase `teams`), null si no hay. */
+  teamLogo: string | null
   techniques: CardTechnique[]
   /** Codigo de personaje real de Victory Road (c0XXXXXXX), null si no resuelto todavia. */
   victorymodsCharacterCode: string | null

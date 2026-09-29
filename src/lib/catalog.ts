@@ -14,23 +14,44 @@ interface Row {
   element: string | null
   category: string
   image_url: string | null
-  card_techniques: { slot: number; technique_id: string; techniques: { id: string; name: string; victorymods_id: number | null } | null }[]
+  card_techniques: {
+    slot: number
+    technique_id: string
+    techniques: { id: string; name: string; victorymods_id: number | null; element: string | null; vr_tp: number | null; cost: number | null } | null
+  }[]
   card_victorymods_map: { character_code: string | null }[] | { character_code: string | null } | null
 }
 
+interface TeamRow {
+  name: string
+  logo_url: string | null
+  logos: Partial<Record<GameId, string>> | null
+}
+
+function resolveTeamLogo(team: string | null, game: GameId): string | null {
+  if (!team) return null
+  const t = teamsByName.get(team)
+  if (!t) return null
+  return t.logos?.[game] ?? t.logo_url ?? null
+}
+
+let teamsByName = new Map<string, TeamRow>()
+
 function toCard(r: Row): Card {
   const mapRow = Array.isArray(r.card_victorymods_map) ? r.card_victorymods_map[0] : r.card_victorymods_map
+  const game = r.game as GameId
   return {
     id: r.id,
     characterId: r.character_id,
     name: r.name,
-    game: r.game as GameId,
+    game,
     version: r.version,
     team: r.team,
     position: r.position as Position,
     element: (r.element as Element) ?? null,
     category: r.category as Category,
     image: r.image_url,
+    teamLogo: resolveTeamLogo(r.team, game),
     victorymodsCharacterCode: mapRow?.character_code ?? null,
     techniques: (r.card_techniques ?? [])
       .filter((ct) => ct.techniques)
@@ -40,6 +61,8 @@ function toCard(r: Row): Card {
         id: ct.technique_id,
         name: ct.techniques!.name,
         victorymodsId: ct.techniques!.victorymods_id,
+        element: (ct.techniques!.element as Element) ?? null,
+        tp: ct.techniques!.vr_tp ?? ct.techniques!.cost ?? null,
       })),
   }
 }
@@ -50,6 +73,11 @@ let cache: Card[] | null = null
  * real de Victory Road, que son las unicas exportables a VictoryMods. */
 export async function loadCatalog(): Promise<Card[]> {
   if (cache) return cache
+
+  const { data: teamRows, error: teamError } = await supabase.from('teams').select('name, logo_url, logos')
+  if (teamError) throw teamError
+  teamsByName = new Map((teamRows as TeamRow[]).map((t) => [t.name, t]))
+
   const rows: Row[] = []
   let from = 0
   for (;;) {
@@ -57,7 +85,7 @@ export async function loadCatalog(): Promise<Card[]> {
       .from('cards')
       .select(
         `id, character_id, name, game, version, team, position, element, category, image_url,
-         card_techniques ( slot, technique_id, techniques ( id, name, victorymods_id ) ),
+         card_techniques ( slot, technique_id, techniques ( id, name, victorymods_id, element, vr_tp, cost ) ),
          card_victorymods_map!inner ( character_code )`
       )
       .not('card_victorymods_map.character_code', 'is', null)
