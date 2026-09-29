@@ -1,9 +1,10 @@
 import type { Card, Position } from '../types'
+import formationMap from '../data/formationMap.json'
 
 // Formaciones copiadas de ale-dm/inazuma-draft (rama app, lib/lineup.ts) —
-// mismo layout visual del campo (11 puestos con su x/y). Son un dibujo del
-// campo para el draft, no el `formation` real de VictoryMods (ese es un id
-// numerico de Victory Road, ver src/data/formations.json).
+// mismo layout visual del campo (11 puestos con su x/y). Cada una tiene su
+// id real de Victory Road en formationMap.json (mismo reparto DF/MF/FW,
+// sacado de m_SoccerFormationInfoList + m_SoccerFormPlacementInfoList).
 export type SlotId =
   | 'GK'
   | 'LB' | 'CB1' | 'CB2' | 'CB3' | 'RB'
@@ -54,6 +55,11 @@ export type LineupMap = Partial<Record<SlotId, Card>>
 
 export function getFormation(id: FormationId): FormationDef {
   return FORMATIONS.find((f) => f.id === id) ?? FORMATIONS[0]
+}
+
+/** Id real de formacion de Victory Road para el dibujo elegido (mismo reparto DF/MF/FW) */
+export function realFormationId(id: FormationId): number {
+  return (formationMap as Record<FormationId, number>)[id]
 }
 
 function activeSlotIds(formationId: FormationId): SlotId[] {

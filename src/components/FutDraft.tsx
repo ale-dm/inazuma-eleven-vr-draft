@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Card } from '../types'
-import { getFormation, nextEmptySlot, type FormationId, type LineupMap, type SlotId } from '../lib/lineup'
+import { getFormation, nextEmptySlot, realFormationId, type FormationId, type LineupMap, type SlotId } from '../lib/lineup'
 import { BENCH, benchOptions, captainOptions, formationOptions, slotOptions } from '../lib/futDraft'
 import InaCard from './InaCard'
 import Sheet from './Sheet'
@@ -100,7 +100,12 @@ export default function FutDraft({ catalog }: Props) {
     ]
     const captainSlot = Object.keys(lineup).indexOf(captain ?? '')
     try {
-      exportAndDownload({ name: teamName.trim() || 'Mi Equipo', slots, captainSlot: captainSlot >= 0 ? captainSlot : 0 })
+      exportAndDownload({
+        name: teamName.trim() || 'Mi Equipo',
+        slots,
+        captainSlot: captainSlot >= 0 ? captainSlot : 0,
+        formation: formation ? realFormationId(formation) : undefined,
+      })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     }

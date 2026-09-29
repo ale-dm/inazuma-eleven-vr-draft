@@ -3,6 +3,7 @@ import type { Card } from './types'
 import { loadCatalog } from './lib/catalog'
 import SquadBuilder from './components/SquadBuilder'
 import FutDraft from './components/FutDraft'
+import Presets from './components/Presets'
 
 type Mode = 'draft' | 'builder' | 'presets'
 
@@ -35,14 +36,7 @@ export default function App() {
         {!catalog && !loadError && <p className="text-iz-muted">Cargando catalogo...</p>}
         {catalog && mode === 'draft' && <FutDraft catalog={catalog} />}
         {catalog && mode === 'builder' && <SquadBuilder catalog={catalog} />}
-        {catalog && mode === 'presets' && (
-          <div className="iz-panel">
-            <div className="iz-panel-head">Presets</div>
-            <div className="iz-panel-body">
-              <p className="text-sm text-iz-muted">Proximamente: plantillas predefinidas listas para exportar en un click.</p>
-            </div>
-          </div>
-        )}
+        {catalog && mode === 'presets' && <Presets catalog={catalog} />}
       </main>
     </div>
   )

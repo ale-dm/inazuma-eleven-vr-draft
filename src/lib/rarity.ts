@@ -15,6 +15,13 @@ export function rarityLabel(category: Category): string {
   return category.replace(' Player', '')
 }
 
+/** De menor a mayor — para filtros "rareza mínima" */
+export const RARITY_ORDER: Category[] = ['Common Player', 'Growing Player', 'Advanced Player', 'Top Player', 'Legendary Player']
+
+export function meetsMinRarity(category: Category, min: Category): boolean {
+  return RARITY_ORDER.indexOf(category) >= RARITY_ORDER.indexOf(min)
+}
+
 /**
  * grade (0-5) de ExtraRoster BB por categoria. Confirmado leyendo
  * growth_table_config del juego: charaRank tiene 6 escalones reales (0-5),
