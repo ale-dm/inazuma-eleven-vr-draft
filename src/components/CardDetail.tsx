@@ -27,6 +27,7 @@ export default function CardDetail({ card, onClose }: Props) {
                 <li key={t.slot}>
                   {t.element && <ElementIcon element={t.element} className="card-info__tech-icon" />}
                   <b title={t.name}>{t.name}</b>
+                  {t.power != null && <small>Pot. {t.power.min}-{t.power.max}</small>}
                   {t.tp != null && <small>TP {t.tp}</small>}
                 </li>
               ))}

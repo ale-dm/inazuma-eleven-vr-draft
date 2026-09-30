@@ -10,6 +10,8 @@ import { exportAndDownload } from '../lib/exportVictoryMods'
 
 interface Props {
   catalog: Card[]
+  /** Si se pasa, se muestra un botón para volver (usado por Presets para cambiar el filtro) */
+  onExit?: () => void
 }
 
 type Spot = SlotId | `bench-${number}`
@@ -18,7 +20,7 @@ const benchIndex = (s: Spot) => (s.startsWith('bench-') ? Number(s.slice(6)) : -
 
 /** Draft estilo FIFA/FC — copiado de ale-dm/inazuma-draft (rama app, FutDraft.tsx):
  * formacion, capitan y cada hueco 1 de 6, sin rondas. Sin quimica (no aplica aqui). */
-export default function FutDraft({ catalog }: Props) {
+export default function FutDraft({ catalog, onExit }: Props) {
   const [formations] = useState(() => formationOptions())
   const [captains] = useState(() => captainOptions(catalog))
   const [formation, setFormation] = useState<FormationId | null>(null)
@@ -114,6 +116,11 @@ export default function FutDraft({ catalog }: Props) {
   return (
     <div className="hub fd" style={{ position: 'relative', minHeight: '70vh' }}>
       <main className="fd-main">
+        {onExit && (
+          <button type="button" className="btn-secondary text-sm px-3 py-1.5 mb-2" onClick={onExit}>
+            ← Cambiar filtro
+          </button>
+        )}
         {!formation && (
           <section className="fd-step">
             <h2 className="fd-title">Formacion</h2>

@@ -9,8 +9,10 @@ export interface CardTechnique {
   name: string
   victorymodsId: number | null
   element: Element | null
-  /** Coste en TP: el real de Victory Road si lo tenemos, si no el historico de la wiki. */
+  /** Coste en TP del mod "Curva Hissatsu" (el que se instala en el juego); si no tiene balance propuesto, el real de Victory Road, si no el historico de la wiki. */
   tp: number | null
+  /** Rango de potencia del mod "Curva Hissatsu" (o el real de Victory Road si no tiene balance propuesto) */
+  power: { min: number; max: number } | null
 }
 
 export interface Card {

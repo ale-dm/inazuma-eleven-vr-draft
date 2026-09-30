@@ -1,88 +1,59 @@
 import { useMemo, useState } from 'react'
 import type { Card, Category, GameId } from '../types'
-import { FORMATIONS, realFormationId, type FormationId } from '../lib/lineup'
-import { generatePreset, presetAvailability, type PresetResult } from '../lib/presets'
+import { filterCatalog, presetAvailability } from '../lib/presets'
 import { GAME_LABEL } from '../data/games'
 import { RARITY_ORDER, rarityLabel } from '../lib/rarity'
-import { exportAndDownload } from '../lib/exportVictoryMods'
-import Pitch from './Pitch'
-import InaCard from './InaCard'
-import CardDetail from './CardDetail'
+import FutDraft from './FutDraft'
 
 interface Props {
   catalog: Card[]
 }
 
-/** Presets por saga: genera un equipo completo de un solo juego (IE1, GO2, VR...), con rareza minima y formacion a elegir. */
+/** Presets: filtra el catalogo por una o mas sagas y una rareza minima, y luego es el mismo draft de siempre (6 cartas, eliges) pero solo con esos jugadores. */
 export default function Presets({ catalog }: Props) {
-  const [game, setGame] = useState<GameId | null>(null)
+  const [games, setGames] = useState<Set<GameId>>(new Set())
   const [minRarity, setMinRarity] = useState<Category>('Common Player')
-  const [formationId, setFormationId] = useState<FormationId>('basic')
-  const [teamName, setTeamName] = useState('Mi Equipo')
-  const [result, setResult] = useState<PresetResult | null>(null)
-  const [genError, setGenError] = useState<string | null>(null)
-  const [exportError, setExportError] = useState<string | null>(null)
-  const [inspecting, setInspecting] = useState<Card | null>(null)
+  const [started, setStarted] = useState(false)
 
-  const games = useMemo(() => {
+  const availableGames = useMemo(() => {
     const present = new Set(catalog.map((c) => c.game))
     return (Object.keys(GAME_LABEL) as GameId[]).filter((g) => present.has(g))
   }, [catalog])
 
-  const availability = useMemo(() => (game ? presetAvailability(catalog, game, minRarity) : null), [catalog, game, minRarity])
+  const availability = useMemo(() => presetAvailability(catalog, games, minRarity), [catalog, games, minRarity])
+  const filtered = useMemo(() => filterCatalog(catalog, games, minRarity), [catalog, games, minRarity])
 
-  function generate() {
-    if (!game) return
-    setGenError(null)
-    setExportError(null)
-    const r = generatePreset(catalog, { game, minRarity, formation: formationId })
-    if ('error' in r) { setGenError(r.error); setResult(null); return }
-    setResult(r)
+  function toggleGame(g: GameId) {
+    setGames((prev) => {
+      const next = new Set(prev)
+      if (next.has(g)) next.delete(g)
+      else next.add(g)
+      return next
+    })
   }
 
-  function handleExport() {
-    if (!result) return
-    setExportError(null)
-    const slots = [
-      ...Object.entries(result.lineup).map(([, card], i) => ({ slot: i, card: card! })),
-      ...result.bench.filter((c): c is Card => !!c).map((card, i) => ({ slot: 11 + i, card })),
-    ]
-    const captainSlot = Object.keys(result.lineup).indexOf(result.captain)
-    try {
-      exportAndDownload({
-        name: teamName.trim() || 'Mi Equipo',
-        slots,
-        captainSlot: captainSlot >= 0 ? captainSlot : 0,
-        formation: realFormationId(formationId),
-      })
-    } catch (e) {
-      setExportError(e instanceof Error ? e.message : String(e))
-    }
-  }
-
-  if (!game) {
-    return (
-      <section className="fd-step">
-        <h2 className="fd-title">Elige saga</h2>
-        <div className="fd-formations">
-          {games.map((g) => (
-            <button key={g} type="button" className="tile fd-formation" onClick={() => setGame(g)}>
-              <span className="tile__label">{g}</span>
-              <small>{GAME_LABEL[g]}</small>
-            </button>
-          ))}
-        </div>
-      </section>
-    )
+  if (started) {
+    return <FutDraft key={[...games].sort().join(',') + minRarity} catalog={filtered} onExit={() => setStarted(false)} />
   }
 
   return (
     <section className="fd-step">
-      <h2 className="fd-title">{GAME_LABEL[game]}</h2>
+      <h2 className="fd-title">Presets</h2>
 
       <div className="iz-panel">
-        <div className="iz-panel-head">Parametros</div>
+        <div className="iz-panel-head">Filtro</div>
         <div className="iz-panel-body space-y-3">
+          <div>
+            <p className="sheet-label mb-1">Sagas (elige una o varias)</p>
+            <div className="chip-row">
+              {availableGames.map((g) => (
+                <button key={g} type="button" className={`chip ${games.has(g) ? 'on' : ''}`} onClick={() => toggleGame(g)}>
+                  {g} · {GAME_LABEL[g]}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <p className="sheet-label mb-1">Rareza minima</p>
             <div className="chip-row">
@@ -94,68 +65,17 @@ export default function Presets({ catalog }: Props) {
             </div>
           </div>
 
-          <div>
-            <p className="sheet-label mb-1">Formacion</p>
-            <div className="chip-row">
-              {FORMATIONS.map((f) => (
-                <button key={f.id} type="button" className={`chip ${formationId === f.id ? 'on' : ''}`} onClick={() => setFormationId(f.id)}>
-                  {f.name} · {f.layout}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {availability && (
+          {games.size > 0 && (
             <p className="fd-hint" style={{ minHeight: 'auto' }}>
-              Disponibles en {GAME_LABEL[game]} con esa rareza: {availability.GK} PT · {availability.DF} DF · {availability.MF} MF · {availability.FW} DL
+              Disponibles con ese filtro: {availability.total} jugadores — {availability.GK} PT · {availability.DF} DF · {availability.MF} MF · {availability.FW} DL
             </p>
           )}
 
-          {genError && <p className="text-sm text-red-400">{genError}</p>}
-
-          <div className="flex gap-2">
-            <button type="button" className="btn-secondary text-sm px-3 py-1.5" onClick={() => { setGame(null); setResult(null) }}>
-              Cambiar saga
-            </button>
-            <button type="button" className="sheet-cta fd-cta" style={{ flex: 1 }} onClick={generate}>
-              {result ? 'Generar otra vez' : 'Generar equipo'}
-            </button>
-          </div>
+          <button type="button" className="sheet-cta fd-cta" disabled={games.size === 0} onClick={() => setStarted(true)}>
+            {games.size === 0 ? 'Elige al menos una saga' : 'Empezar draft'}
+          </button>
         </div>
       </div>
-
-      {result && (
-        <>
-          <Pitch
-            slots={FORMATIONS.find((f) => f.id === formationId)!.slots}
-            lineup={result.lineup}
-            captain={result.captain}
-            onLongPress={(c) => setInspecting(c)}
-          />
-
-          <h3 className="sheet-label">Banquillo</h3>
-          <div className="fd-bench">
-            {result.bench.map((c, i) => (
-              <div key={i} className="fd-bench__spot">
-                {c ? <InaCard card={c} size="xs" onLongPress={() => setInspecting(c)} /> : <div className="fd-empty" style={{ animation: 'none', opacity: 0.4 }}><small>Vacio</small></div>}
-              </div>
-            ))}
-          </div>
-
-          <div className="iz-panel">
-            <div className="iz-panel-head">Exportar</div>
-            <div className="iz-panel-body space-y-3">
-              <input value={teamName} onChange={(e) => setTeamName(e.target.value)} className="search-input" placeholder="Nombre del equipo" />
-              {exportError && <p className="text-sm text-red-400">{exportError}</p>}
-              <button type="button" className="sheet-cta fd-cta" onClick={handleExport}>
-                Exportar a VictoryMods
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      <CardDetail card={inspecting} onClose={() => setInspecting(null)} />
     </section>
   )
 }

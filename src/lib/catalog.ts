@@ -18,7 +18,11 @@ interface Row {
   card_techniques: {
     slot: number
     technique_id: string
-    techniques: { id: string; name: string; victorymods_id: number | null; element: string | null; vr_tp: number | null; cost: number | null } | null
+    techniques: {
+      id: string; name: string; victorymods_id: number | null; element: string | null; cost: number | null
+      vr_tp: number | null; vr_power_min: number | null; vr_power_max: number | null
+      balance_tp: number | null; balance_power_min: number | null; balance_power_max: number | null
+    } | null
   }[]
   card_victorymods_map: { character_code: string | null }[] | { character_code: string | null } | null
 }
@@ -58,14 +62,20 @@ function toCard(r: Row): Card {
     techniques: (r.card_techniques ?? [])
       .filter((ct) => ct.techniques)
       .sort((a, b) => a.slot - b.slot)
-      .map((ct) => ({
-        slot: ct.slot,
-        id: ct.technique_id,
-        name: ct.techniques!.name,
-        victorymodsId: ct.techniques!.victorymods_id,
-        element: (ct.techniques!.element as Element) ?? null,
-        tp: ct.techniques!.vr_tp ?? ct.techniques!.cost ?? null,
-      })),
+      .map((ct) => {
+        const t = ct.techniques!
+        const powerMin = t.balance_power_min ?? t.vr_power_min
+        const powerMax = t.balance_power_max ?? t.vr_power_max
+        return {
+          slot: ct.slot,
+          id: ct.technique_id,
+          name: t.name,
+          victorymodsId: t.victorymods_id,
+          element: (t.element as Element) ?? null,
+          tp: t.balance_tp ?? t.vr_tp ?? t.cost ?? null,
+          power: powerMin != null && powerMax != null ? { min: powerMin, max: powerMax } : null,
+        }
+      }),
   }
 }
 
@@ -87,7 +97,7 @@ export async function loadCatalog(): Promise<Card[]> {
       .from('cards')
       .select(
         `id, character_id, name, game, version, team, position, element, category, image_url,
-         card_techniques ( slot, technique_id, techniques ( id, name, victorymods_id, element, vr_tp, cost ) ),
+         card_techniques ( slot, technique_id, techniques ( id, name, victorymods_id, element, cost, vr_tp, vr_power_min, vr_power_max, balance_tp, balance_power_min, balance_power_max ) ),
          card_victorymods_map!inner ( character_code )`
       )
       .not('card_victorymods_map.character_code', 'is', null)
