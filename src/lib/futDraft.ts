@@ -4,7 +4,7 @@ import { FORMATIONS, type FormationId } from './lineup'
 // Mecanica copiada de ale-dm/inazuma-draft (rama app, lib/fut-draft.ts):
 // para cada hueco salen OPTIONS cartas para elegir 1, con la rareza
 // sorteada por peso — igual que un draft de FIFA/FC.
-export const OPTIONS = 6
+export const OPTIONS = 4
 export const BENCH = 5
 
 const RARITY_WEIGHT: Record<Category, number> = {

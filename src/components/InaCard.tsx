@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type PointerEvent } from 'react'
 import type { Card } from '../types'
 import { raritySlug } from '../lib/rarity'
 import { PositionIcon, ElementIcon, SeriesIcon } from './GameIcon'
@@ -43,11 +43,16 @@ export default function InaCard({ card, size = 'md', onClick, onLongPress }: Pro
     if (longPressed.current) { longPressed.current = false; return }
     onClick?.()
   }
+  // con raton, pasar por encima abre la ficha directamente (mantener pulsado sigue sirviendo para tactil)
+  const handlePointerEnter = (e: PointerEvent) => {
+    if (onLongPress && e.pointerType === 'mouse') onLongPress()
+  }
 
   return (
     <Tag
       type={onClick ? 'button' : undefined}
       onClick={onClick ? handleClick : undefined}
+      onPointerEnter={onLongPress ? handlePointerEnter : undefined}
       onPointerDown={onLongPress ? startPress : undefined}
       onPointerUp={onLongPress ? clearPress : undefined}
       onPointerLeave={onLongPress ? clearPress : undefined}
